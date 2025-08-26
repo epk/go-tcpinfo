@@ -9,7 +9,6 @@ package exporter
 
 import (
 	"fmt"
-	"github.com/higebu/netfd"
 	"net"
 	"sync"
 
@@ -63,8 +62,14 @@ func (t *TCPInfoCollector) Add(conn net.Conn, labels []string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	fd, err := GetFdFromConnSafe(conn)
+	if err != nil {
+		t.logger(fmt.Errorf("error getting file descriptor for connection %v -> %v: %w", conn.LocalAddr(), conn.RemoteAddr(), err))
+		return
+	}
+
 	t.conns[conn] = connEntry{
-		fd:     netfd.GetFdFromConn(conn),
+		fd:     fd,
 		labels: labels,
 	}
 }
